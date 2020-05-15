@@ -22,7 +22,7 @@ def dispersion_set(q, r, k):
     for s, _ in q.factor_list():
         for t, _ in r.factor_list():
             J = J + irreducible_dispersion(s, t, k)
-    return set(J)
+    return J
 
 
 def find_polys(n, d, k):
@@ -32,7 +32,7 @@ def find_polys(n, d, k):
     r = d.subs({k: k-1})
     J = dispersion_set(q, r, k)
     while len(J) > 0:
-        j = list(J)[0]
+        j = J[0]
         g = gcd([q, r.subs({k: k+j})])
         p = p * prod([g.subs({k: k-i}) for i in range(j)])
         q = q / g
@@ -62,4 +62,34 @@ def degree_bound(p, q, r, k):
     return max([n, p.degree(k) - s + 1])
 
 
+def gosper_sum(a, k):
+    n, d = (a.subs({k: k+1}) / a).numerator_denominator()
+    p, q, r = find_polys(n, d, k)
+    N = degree_bound(p, q, r, k)
+    if N < 0:
+        raise RuntimeError("%s is not Gosper-summable in %s" % (a, k))
+    # declare the variables c[0], ..., c[N]
+    coeff = [SR.var("c_%s" % j) for j in range(N + 1)]
+    f = sum([coeff[j] * k^j for j in range(N+1)])
+    eq = p - q.subs({k: k+1}) * f + r * f.subs({k: k-1})
+    try:
+        sol = solve_for_coefficients(eq, k, coeff)
+    except ValueError:
+        raise RuntimeError("%s is not Gosper-summable in %s" % (a, k))
+    f_sol = sum([sol[j] * k^j for j in range(N+1)])
+    A = r / p * f_sol.subs({k: k-1}) * a
+    return A
 
+
+def dot_product(a, b):
+    if len(a) != len(b):
+        raise ValueError("%s and %s must have the same length" %(a, b))
+    return sum([a[j] * b[j] for j in range(len(a))])
+
+
+def solve_for_coefficients(f, k, coeff):
+    rels = [r for [r, _] in f.coefficients(k)]
+    rows = [[r.coefficient(c).simplify_full() for c in coeff] for r in rels]
+    consts = [-(rels[j] - dot_product(rows[j], coeff)).simplify_full() for j in range(len(rels))]
+    m = matrix(SR, rows)
+    return m.solve_right(vector(consts))
