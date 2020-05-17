@@ -100,6 +100,8 @@ def _test_all():
     _test_dispersion_set()
     _test_find_polys()
     _test_degree_bound()
+    _test_dot_product()
+    _test_solve_for_coefficients()
     _test_gosper_sum()
 
 
@@ -195,11 +197,35 @@ def _test_degree_bound():
         raise RuntimeError("degree_bound(%s, %s, %s, %s) = %s but should be %s" % (p, q, r, k, res, correct))
 
 
-def _test_solve_for_coefficients():
-    pass
-
-
 def _test_dot_product():
+    # first test
+    a = [1, 2, 3]
+    b = [3, 2, 0]
+    res = dot_product(a, b)
+    correct = 7
+    if res != correct:
+        raise RuntimeError("dot_product(%s, %s) = %s but should be %s" % (a, b, res, correct))
+    # second test
+    a = [1, 2, 3]
+    b = [3, 2]
+    passed = False
+    try:
+        res = dot_product(a, b)
+    except ValueError:
+        passed = True
+    if not passed:
+        raise RuntimeError("dot_product(%s, %s) = %s but should have raised error" % (a, b, res))
+    # third test: symbolic case
+    x, y, z = SR.var("x, y, z")
+    a = [1, 2, 3]
+    b = [x, y, z]
+    res = dot_product(a, b)
+    correct = x + 2*y + 3*z
+    if res != correct:
+        raise RuntimeError("dot_product(%s, %s) = %s but should be %s" % (a, b, res, correct))
+
+
+def _test_solve_for_coefficients():
     pass
 
 
