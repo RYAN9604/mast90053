@@ -226,7 +226,18 @@ def _test_dot_product():
 
 
 def _test_solve_for_coefficients():
-    pass
+    k = SR.var("k")
+    # first test
+    c = SR.var("c")
+    coeff = [c]
+    f = SR(1)
+    passed = False
+    try:
+        res = solve_for_coefficients(f, k, coeff)
+    except ValueError:
+        passed = True
+    if not passed:
+        raise RuntimeError("solve_for_coefficients(%s, %s, %s) = %s but should have raised error" % (f, k, coeff, res))
 
 
 def _test_gosper_sum():
