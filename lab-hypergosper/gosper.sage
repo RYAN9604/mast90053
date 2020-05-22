@@ -28,22 +28,22 @@ def dispersion_set(q, r, k):
 def find_polys(n, d, k):
     R = parent(n)
     p = R(1)
-    q = n.subs({k: k-1})
-    r = d.subs({k: k-1})
+    q = n.subs({k: k-1}).simplify_full()
+    r = d.subs({k: k-1}).simplify_full()
     J = dispersion_set(q, r, k)
     while len(J) > 0:
         j = J[0]
         g = gcd([q, r.subs({k: k+j})])
         p = p * prod([g.subs({k: k-i}) for i in range(j)])
-        q = q / g
-        r = r / g.subs({k: k-j})
+        q = (q / g).simplify_full()
+        r = (r / g.subs({k: k-j})).simplify_full()
         J = dispersion_set(q, r, k)
     return (p, q, r)
 
 
 def degree_bound(p, q, r, k):
-    sigma = q.subs({k: k+1}) + r
-    delta = q.subs({k: k+1}) - r
+    sigma = (q.subs({k: k+1}) + r).simplify_full()
+    delta = (q.subs({k: k+1}) - r).simplify_full()
     if sigma == 0:
         s = -Infinity
     else:
@@ -63,7 +63,12 @@ def degree_bound(p, q, r, k):
 
 
 def gosper_sum(a, k):
-    n, d = (a.subs({k: k+1}) / a).numerator_denominator()
+    R = gosper_certificate(a, k)
+    return R * a
+
+
+def gosper_certificate(a, k):
+    n, d = (a.subs({k: k+1}) / a).simplify_factorial().numerator_denominator()
     p, q, r = find_polys(n, d, k)
     N = degree_bound(p, q, r, k)
     if N < 0:
@@ -77,8 +82,8 @@ def gosper_sum(a, k):
     except ValueError:
         raise RuntimeError("%s is not Gosper-summable in %s" % (a, k))
     f_sol = sum([sol[j] * k^j for j in range(N+1)])
-    A = r / p * f_sol.subs({k: k-1}) * a
-    return A
+    R = r / p * f_sol.subs({k: k-1})
+    return R
 
 
 def dot_product(a, b):
@@ -270,5 +275,28 @@ def _test_gosper_sum():
     res = gosper_sum(a, k)
     res = res.simplify_full().factor()
     correct = -(3*k^4+30*k^3+95*k^2+100*k+24) * (2*k+5) / (6 * (k+5) * (k+4) * (k+3) * (k+2) * (k+1) * k)
+    if res != correct:
+        raise RuntimeError("gosper_sum(%s, %s) = %s but should be %s" % (a, k, res, correct))
+    # fifth test
+    n = var("n")
+    a = binomial(n, k)
+    passed = False
+    try:
+        res = gosper_sum(a, k)
+    except RuntimeError:
+        passed = True
+    if not passed:
+        raise RuntimeError("gosper_sum(%s, %s) = %s but should have raised error" % (a, k, res))
+    # sixth test
+    n = var("n")
+    a = (-1)^k * binomial(n, k)
+    res = gosper_sum(a, k)
+    correct = -k/n * (-1)^k * binomial(n, k)
+    if res != correct:
+        raise RuntimeError("gosper_sum(%s, %s) = %s but should be %s" % (a, k, res, correct))
+    # seventh test
+    a = k * factorial(k)
+    res = gosper_sum(a, k)
+    correct = factorial(k)
     if res != correct:
         raise RuntimeError("gosper_sum(%s, %s) = %s but should be %s" % (a, k, res, correct))
