@@ -95,9 +95,15 @@ def dot_product(a, b):
 def solve_for_coefficients(f, k, coeff):
     rels = [r for [r, _] in f.coefficients(k)]
     rows = [[r.coefficient(c).simplify_full() for c in coeff] for r in rels]
-    consts = [-(rels[j] - dot_product(rows[j], coeff)).simplify_full() for j in range(len(rels))]
+    consts = matrix(SR, [-(rels[j] - dot_product(rows[j], coeff)).simplify_full() for j in range(len(rels))]).transpose()
     m = matrix(SR, rows)
-    return m.solve_right(vector(consts))
+    # up to and including Sage 9.0, this was
+    #     return m.solve_right(consts)
+    # but starting with Sage 9.1, the command silently returns
+    # wrong answers instead of raising an error
+    # see trac #12406 and discussions on sage-devel
+    sol = m._solve_right_general(consts, check=True)
+    return vector(sol)
 
 
 def _test_all():
