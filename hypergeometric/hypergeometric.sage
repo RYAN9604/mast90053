@@ -330,40 +330,15 @@ def gosper_sum(a, k):
 
 
 def _test_gosper_sum():
-    k = SR.var("k")
     # first test
-    a = k^3
-    res = gosper_sum(a, k)
-    res = res.simplify_full().factor()
-    correct = k^2 * (k-1)^2 / 4
-    if res != correct:
-        raise RuntimeError("gosper_sum(%s, %s) = %s but should be %s" % (a, k, res, correct))
-    # second test
-    a = 1/k
-    passed = False
-    try:
-        res = gosper_sum(a, k)
-    except RuntimeError:
-        passed = True
-    if not passed:
-        raise RuntimeError("gosper_sum(%s, %s) = %s but should have raised error" % (a, k, res))
-    # third test
     a = 1/k - 1/(k+1)
     res = gosper_sum(a, k)
     res = res.simplify_full().factor()
     correct = -1/k
     if res != correct:
         raise RuntimeError("gosper_sum(%s, %s) = %s but should be %s" % (a, k, res, correct))
-    # fourth test
-    a = 1 / (k * (k+6))
-    res = gosper_sum(a, k)
-    res = res.simplify_full().factor()
-    correct = -(3*k^4+30*k^3+95*k^2+100*k+24) * (2*k+5) / (6 * (k+5) * (k+4) * (k+3) * (k+2) * (k+1) * k)
-    if res != correct:
-        raise RuntimeError("gosper_sum(%s, %s) = %s but should be %s" % (a, k, res, correct))
-    # fifth test
-    n = var("n")
-    a = binomial(n, k)
+    # second test
+    a = factorial(k)
     passed = False
     try:
         res = gosper_sum(a, k)
@@ -371,19 +346,6 @@ def _test_gosper_sum():
         passed = True
     if not passed:
         raise RuntimeError("gosper_sum(%s, %s) = %s but should have raised error" % (a, k, res))
-    # sixth test
-    n = var("n")
-    a = (-1)^k * binomial(n, k)
-    res = gosper_sum(a, k)
-    correct = -k/n * (-1)^k * binomial(n, k)
-    if res != correct:
-        raise RuntimeError("gosper_sum(%s, %s) = %s but should be %s" % (a, k, res, correct))
-    # seventh test
-    a = k * factorial(k)
-    res = gosper_sum(a, k)
-    correct = factorial(k)
-    if res != correct:
-        raise RuntimeError("gosper_sum(%s, %s) = %s but should be %s" % (a, k, res, correct))
 
 
 def gosper_certificate(a, k):
@@ -406,6 +368,62 @@ def gosper_certificate(a, k):
     f_sol = sum([sol[j] * k^j for j in range(N+1)])
     R = r / p * f_sol.subs({k: k-1})
     return R
+
+
+def _test_gosper_certificate():
+    k = SR.var("k")
+    # first test
+    a = k^3
+    res = gosper_certificate(a, k)
+    res = res.simplify_full().factor()
+    correct = (k-1)^2 / (4 * k)
+    if res != correct:
+        raise RuntimeError("gosper_certificate(%s, %s) = %s but should be %s" % (a, k, res, correct))
+    # second test
+    a = 1/k
+    passed = False
+    try:
+        res = gosper_certificate(a, k)
+    except RuntimeError:
+        passed = True
+    if not passed:
+        raise RuntimeError("gosper_certificate(%s, %s) = %s but should have raised error" % (a, k, res))
+    # third test
+    a = 1 / (k * (k+6))
+    res = gosper_certificate(a, k)
+    res = res.simplify_full().factor()
+    correct = -(3*k^4+30*k^3+95*k^2+100*k+24) * (2*k+5) * (k+6) / (6 * (k+5) * (k+4) * (k+3) * (k+2) * (k+1))
+    if res != correct:
+        raise RuntimeError("gosper_certificate(%s, %s) = %s but should be %s" % (a, k, res, correct))
+    # fourth test
+    n = var("n")
+    a = binomial(n, k)
+    passed = False
+    try:
+        res = gosper_certificate(a, k)
+    except RuntimeError:
+        passed = True
+    if not passed:
+        raise RuntimeError("gosper_certificate(%s, %s) = %s but should have raised error" % (a, k, res))
+    # fifth test
+    n = var("n")
+    a = (-1)^k * binomial(n, k)
+    res = gosper_certificate(a, k)
+    correct = -k/n
+    if res != correct:
+        raise RuntimeError("gosper_certificate(%s, %s) = %s but should be %s" % (a, k, res, correct))
+    # sixth test
+    a = k * factorial(k)
+    res = gosper_certificate(a, k)
+    correct = 1/k
+    if res != correct:
+        raise RuntimeError("gosper_certificate(%s, %s) = %s but should be %s" % (a, k, res, correct))
+    # seventh test
+    a = (4*k+1) * factorial(k) / factorial(2*k+1)
+    res = gosper_certificate(a, k)
+    correct = -2 * (2*k+1) / (4*k+1)
+    if res != correct:
+        raise RuntimeError("gosper_certificate(%s, %s) = %s but should be %s" % (a, k, res, correct))
 
 
 def gosper_verify(a, R, k):
@@ -601,8 +619,9 @@ def _test_all():
     _test_dot_product()
     _test_solve_for_coefficients()
     _test_gosper_sum()
-    _test_zeilberger()
+    _test_gosper_certificate()
     _test_gosper_verify()
+    #_test_wz_certificate()
     _test_wz_verify()
-    _test_wz_certificate()
+    _test_zeilberger()
 
