@@ -105,11 +105,11 @@ def _test_hypergeometric_term_recurrence():
         raise RuntimeError("hypergeometric_term_recurrence(%s, %s, %s, %s, %s) = %s but should be %s" % (f, n, k, I, J, res, correct))
     # third test
     # commented out because it takes a long time: 6.5 minutes on my laptop
-    # x, y = var("x, y")
-    # f = binomial(n, k) * factorial(k) * 3^k / factorial(3*k) * x^(n-k) * y^k
-    # I = 1
-    # J = 3
-    # res = hypergeometric_term_recurrence(f, n, k, I, J)
-    # correct = [0, 0, 1, 0, 9*(n + 2)*(n + 1)*x^3/y, -9*(3*n + 5)*(n + 2)*x^2/y, (27*n^2 + 117*n + 128)*x/y, -(3*n + 8)*(3*n + 7)/y]
-    # if res != correct:
-    #     raise RuntimeError("hypergeometric_term_recurrence(%s, %s, %s, %s, %s) = %s but should be %s" % (f, n, k, I, J, res, correct))
+    x, y = var("x, y")
+    f = binomial(n, k) * factorial(k) * 3^k / factorial(3*k) * x^(n-k) * y^k
+    I = 1
+    J = 3
+    res = hypergeometric_term_recurrence(f, n, k, I, J)
+    correct = [0, 0, 1, 0, 9*(n + 2)*(n + 1)*x^3/y, -9*(3*n + 5)*(n + 2)*x^2/y, (27*n^2 + 117*n + 128)*x/y, -(3*n + 8)*(3*n + 7)/y]
+    if res != correct:
+        raise RuntimeError("hypergeometric_term_recurrence(%s, %s, %s, %s, %s) = %s but should be %s" % (f, n, k, I, J, res, correct))
