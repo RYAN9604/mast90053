@@ -1,3 +1,18 @@
+"""
+Collection of tools for hypergeometric summation in Sage.
+
+Includes:
+* fasenmyer_kfree(): Celine Fasenmyer's algorithm for computing
+  recurrence relations
+* gosper_sum(): Gosper's algorithm for hypergeometric indefinite
+  summation
+* wz_certificate(): Wilf-Zeilberger's algorithm for definite
+  summation
+* zeilberger(): Zeilberger's algorithm for computing recurrence
+  relations
+"""
+
+
 def is_hypergeometric_term(f, v):
     ratio = f.subs({v: v+1})/f.subs({v: v})
     ratio = ratio.simplify_full()
