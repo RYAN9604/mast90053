@@ -46,7 +46,7 @@ def fasenmyer_kfree(f, n, k, I=1, J=1):
     for i in range(I + 1):
         for j in range(J + 1):
             g = f.subs({n: n + j, k: k + i}) / f.subs({n: n, k: k})
-            g = g.simplify_full()
+            g = g.simplify_factorial()
             num[i][j], denom[i][j] = g.numerator_denominator()
     LCM = lcm(flatten(denom))
     poly = [[(num[i][j] / denom[i][j] * LCM).simplify_full() for j in range(J + 1)] for i in range(I + 1)]
@@ -56,7 +56,7 @@ def fasenmyer_kfree(f, n, k, I=1, J=1):
         v = solve_for_coefficients_homog(lhs, k, flatten(coeff))
     except IndexError:
         raise RuntimeError("bounds I = %s and J = %s are not large enough" % (I, J))
-    return [SR(a).factor() for a in v]
+    return [SR(a) for a in v]
 
 
 def _test_fasenmyer_kfree():
@@ -144,7 +144,7 @@ def solve_for_coefficients_homog(f, k, coeff):
     Used by fasenmyer_kfree().
     """
     rels = [r for [r, _] in f.coefficients(k)]
-    rows = [[r.coefficient(c).simplify_full() for c in coeff] for r in rels]
+    rows = [[r.coefficient(c).simplify_rational() for c in coeff] for r in rels]
     lst = list(f.variables())
     lst.remove(k)
     for c in coeff:
