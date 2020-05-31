@@ -49,7 +49,7 @@ def fasenmyer_kfree(f, n, k, I=1, J=1):
             g = g.simplify_factorial()
             num[i][j], denom[i][j] = g.numerator_denominator()
     LCM = lcm(flatten(denom))
-    poly = [[(num[i][j] / denom[i][j] * LCM).simplify_full() for j in range(J + 1)] for i in range(I + 1)]
+    poly = [[(num[i][j] / denom[i][j] * LCM) for j in range(J + 1)] for i in range(I + 1)]
     coeff = [[SR.var("a%s_%s" % (i, j)) for j in range(J + 1)] for i in range(I + 1)]
     lhs = sum(flatten([[coeff[i][j] * poly[i][j] for j in range(J + 1)] for i in range(I + 1)]))
     try:
@@ -146,7 +146,8 @@ def solve_for_coefficients_homog(f, k, coeff):
     rels = [r for [r, _] in f.coefficients(k)]
     rows = [[r.coefficient(c).simplify_rational() for c in coeff] for r in rels]
     lst = list(f.variables())
-    lst.remove(k)
+    if k in lst:
+        lst.remove(k)
     for c in coeff:
         if c in lst:
             lst.remove(c)
@@ -200,13 +201,18 @@ def _test_irreducible_dispersion():
         raise RuntimeError("irreducible_dispersion(%s, %s, %s) = %s but should be %s" % (s, t, k, res, correct))
 
 
-def dispersion_set(q, r, k):
+def dispersion_set(q, r, k, simplify=True):
     """
     Used by gosper_certificate().
     """
+    if simplify:
+        q = q.simplify_rational()
+        r = r.simplify_rational()
+    qlst = q.factor_list()
+    rlst = r.factor_list()
     J = []
-    for s, _ in q.factor_list():
-        for t, _ in r.factor_list():
+    for s, _ in qlst:
+        for t, _ in rlst:
             J = J + irreducible_dispersion(s, t, k)
     return J
 
@@ -235,15 +241,15 @@ def find_polys(n, d, k):
     """
     R = parent(n)
     p = R(1)
-    q = n.subs({k: k-1}).simplify_full()
-    r = d.subs({k: k-1}).simplify_full()
+    q = n.subs({k: k-1})
+    r = d.subs({k: k-1})
     J = dispersion_set(q, r, k)
     while len(J) > 0:
         j = J[0]
         g = gcd([q, r.subs({k: k+j})])
         p = p * prod([g.subs({k: k-i}) for i in range(j)])
-        q = (q / g).simplify_full()
-        r = (r / g.subs({k: k-j})).simplify_full()
+        q = (q / g)
+        r = (r / g.subs({k: k-j}))
         J = dispersion_set(q, r, k)
     return (p, q, r)
 
@@ -357,8 +363,8 @@ def gosper_certificate(a, k):
     """
     Main ingredient for gosper_sum().
     """
-    n, d = (a.subs({k: k+1}) / a).simplify_factorial().numerator_denominator()
-    p, q, r = find_polys(n, d, k)
+    num, denom = (a.subs({k: k+1}) / a).simplify_full().numerator_denominator()
+    p, q, r = find_polys(num, denom, k)
     N = degree_bound(p, q, r, k)
     if N < 0:
         raise RuntimeError("%s is not Gosper-summable in %s" % (a, k))
@@ -425,7 +431,7 @@ def _test_gosper_certificate():
         raise RuntimeError("gosper_certificate(%s, %s) = %s but should be %s" % (a, k, res, correct))
     # seventh test
     a = (4*k+1) * factorial(k) / factorial(2*k+1)
-    res = gosper_certificate(a, k)
+    res = gosper_certificate(a, k).simplify_full()
     correct = -2 * (2*k+1) / (4*k+1)
     if res != correct:
         raise RuntimeError("gosper_certificate(%s, %s) = %s but should be %s" % (a, k, res, correct))
@@ -582,11 +588,14 @@ def _test_zeilberger():
         raise RuntimeError("zeilberger(%s, %s, %s, %s) = %s but should be %s" % (f, n, k, J, res, correct))
 
 
-def solve_for_coefficients(f, k, coeff):
+def solve_for_coefficients(f, k, coeff, simplify=True):
+    if simplify:
+        f = f.simplify_full()
     rels = [r for [r, _] in f.coefficients(k)]
-    rows = [[r.coefficient(c).simplify_full() for c in coeff] for r in rels]
+    rows = [[r.coefficient(c) for c in coeff] for r in rels]
     lst = list(f.variables())
-    lst.remove(k)
+    if k in lst:
+        lst.remove(k)
     for c in coeff:
         if c in lst:
             lst.remove(c)
@@ -596,7 +605,7 @@ def solve_for_coefficients(f, k, coeff):
     else:
         S = PolynomialRing(QQ, lst).fraction_field()
     m = matrix(S, rows)
-    consts = matrix(S, [-(rels[j] - dot_product(rows[j], coeff)).simplify_full() for j in range(len(rels))]).transpose()
+    consts = matrix(S, [-(rels[j] - dot_product(rows[j], coeff)) for j in range(len(rels))]).transpose()
     sol = m.solve_right(consts)
     return vector(sol)
 
@@ -627,7 +636,7 @@ def _test_all():
     _test_gosper_sum()
     _test_gosper_certificate()
     _test_gosper_verify()
-    #_test_wz_certificate()
+    _test_wz_certificate()
     _test_wz_verify()
     _test_zeilberger()
 
