@@ -146,7 +146,17 @@ def solve_for_coefficients_homog(f, k, coeff):
     """
     rels = [r for [r, _] in f.coefficients(k)]
     rows = [[r.coefficient(c).simplify_full() for c in coeff] for r in rels]
-    m = matrix(SR, rows)
+    lst = list(f.variables())
+    lst.remove(k)
+    for c in coeff:
+        if c in lst:
+            lst.remove(c)
+    if len(lst) == 0:
+        # annoying special case
+        S = QQ
+    else:
+        S = PolynomialRing(QQ, lst).fraction_field()
+    m = matrix(S, rows)
     K = m.right_kernel()
     return K.basis()[0]
 
@@ -325,6 +335,7 @@ def gosper_sum(a, k):
 
 
 def _test_gosper_sum():
+    k = var("k")
     # first test
     a = 1/k - 1/(k+1)
     res = gosper_sum(a, k)
