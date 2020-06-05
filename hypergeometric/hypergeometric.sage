@@ -49,7 +49,7 @@ def fasenmyer_kfree(f, n, k, I=1, J=1):
             g = g.simplify_factorial()
             num[i][j], denom[i][j] = g.numerator_denominator()
     LCM = lcm(flatten(denom))
-    poly = [[(num[i][j] / denom[i][j] * LCM) for j in range(J + 1)] for i in range(I + 1)]
+    poly = [[(num[i][j] / denom[i][j] * LCM).simplify_full() for j in range(J + 1)] for i in range(I + 1)]
     coeff = [[SR.var("a%s_%s" % (i, j)) for j in range(J + 1)] for i in range(I + 1)]
     lhs = sum(flatten([[coeff[i][j] * poly[i][j] for j in range(J + 1)] for i in range(I + 1)]))
     try:
