@@ -280,12 +280,14 @@ def _test_find_polys():
         raise RuntimeError("find_polys(%s, %s, %s) = %s but should be %s" % (n, d, k, res, correct))
 
 
-def degree_bound(p, q, r, k):
+def degree_bound(p, q, r, k, verbose=False):
     """
     Used by gosper_certificate().
     """
     sigma = (q.subs({k: k+1}) + r).simplify_full()
     delta = (q.subs({k: k+1}) - r).simplify_full()
+    if verbose:
+        print("sigma = %s,    delta = %s" % (sigma, delta))
     if sigma == 0:
         s = -Infinity
     else:
@@ -359,19 +361,27 @@ def _test_gosper_sum():
         raise RuntimeError("gosper_sum(%s, %s) = %s but should have raised error" % (a, k, res))
 
 
-def gosper_certificate(a, k):
+def gosper_certificate(a, k, verbose=False):
     """
     Main ingredient for gosper_sum().
     """
     num, denom = (a.subs({k: k+1}) / a).simplify_full().numerator_denominator()
+    if verbose:
+        print("num = %s,    denom = %s" %(num, denom))
     p, q, r = find_polys(num, denom, k)
-    N = degree_bound(p, q, r, k)
+    if verbose:
+        print("p = %s,    q = %s,    r = %s" %(p, q, r))
+    N = degree_bound(p, q, r, k, verbose)
+    if verbose:
+        print("N = %s" %N)
     if N < 0:
         raise RuntimeError("%s is not Gosper-summable in %s" % (a, k))
     # declare the variables c[0], ..., c[N]
     coeff = [SR.var("c_%s" % j) for j in range(N + 1)]
     f = sum([coeff[j] * k^j for j in range(N+1)])
     eq = p - q.subs({k: k+1}) * f + r * f.subs({k: k-1})
+    if verbose:
+        print("eq = %s" %eq)
     try:
         sol = solve_for_coefficients(eq, k, coeff)
     except ValueError:
